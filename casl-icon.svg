@@ -1,0 +1,16 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Casl icon">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#1f2937"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="piece" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f5f5f4"/>
+      <stop offset="100%" stop-color="#d6d3d1"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <path fill="#8b5e34" d="M88 392h336v56H88z"/>
+  <path fill="url(#piece)" d="M302 103c-30 0-57 10-76 28 17 4 33 16 43 32-36 9-64 40-70 79 13-8 31-12 49-8-17 15-26 36-26 61 0 40 24 74 58 88h-50c-18 0-32 14-32 32h188c0-18-14-32-32-32h-28c29-13 49-42 49-76 0-47-39-86-86-86-11 0-22 2-32 6 5-31 33-53 65-53 12 0 24 3 34 10-6-46-46-81-93-81z"/>
+  <circle cx="292" cy="199" r="12" fill="#111827"/>
+</svg>

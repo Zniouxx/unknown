@@ -1,0 +1,25 @@
+{
+  "name": "Casl",
+  "short_name": "Casl",
+  "description": "Casl chess analyzer with opening explorer and what-if analysis.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "./icons/casl-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./chess/wk.png",
+      "sizes": "50x50",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

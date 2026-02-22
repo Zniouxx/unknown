@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Casl - Chess Companion</title>
+    <meta name="theme-color" content="#111827">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/casl-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="chess/wk.png">
+  
+    <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Casl">
+  <style>
+    /* Basic Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    body {
+      display: flex;
+      min-height: 100vh;
+      background-color: #FAFAFA;
+      color: #333;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: 300px;
+      background-color: #2B2B2B;
+      color: white;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    #sidebar h2 {
+      font-family: Georgia, 'Times New Roman', serif;
+      margin-bottom: 15px;
+    }
+
+    .opening {
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .opening:hover {
+      color: #4CAF50;
+    }
+
+    .variation {
+      font-size: 0.9em;
+      color: #81C784;
+      margin-left: 10px;
+    }
+
+    /* Board container */
+    #board-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    #board-prompt {
+      font-size: 1.2em;
+      color: #666;
+      text-align: center;
+    }
+    #play-area.hidden {
+      display: none;
+    }
+    #play-area {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    #board-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #analysis-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #best-move {
+      font-size: 0.95em;
+      color: #333;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 60px);
+      grid-template-rows: repeat(8, 60px);
+      border: 2px solid #333;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .square {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+    }
+
+    .square img {
+      width: 50px;
+      height: 50px;
+      pointer-events: none;
+    }
+
+    .light { background-color: #F0D9B5; }
+    .dark { background-color: #B58863; }
+    .highlight { background-color: #9CDCFE !important; }
+    .last-move { background-color: #FFF59D !important; }
+
+    /* Controls */
+    #board-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    #step-label {
+      font-size: 0.9em;
+      color: #333;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      background-color: #4CAF50;
+      color: white;
+      transition: transform 0.1s, background 0.2s;
+    }
+
+    button:hover {
+      background-color: #81C784;
+      transform: scale(1.05);
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar / Opening Explorer -->
+  <div id="sidebar">
+    <h2>Openings Explorer</h2>
+    <div class="opening" data-line="e2e4 e7e5 g1f3 b8c6 f1c4">Italian Game
+      <div class="variation">Two Knights Defense</div>
+      <div class="variation">Giuoco Pianissimo</div>
+      <div class="variation">Evans Gambit</div>
+    </div>
+    <div class="opening" data-line="e2e4 c7c5 g1f3 d7d6 d2d4">Sicilian Defense
+      <div class="variation">Open Sicilian</div>
+      <div class="variation">Closed Sicilian</div>
+      <div class="variation">Alapin</div>
+    </div>
+    <div class="opening" data-line="e2e4 e7e5 g1f3 b8c6 d2d4">Scotch Game
+      <div class="variation">Mieses Variation</div>
+      <div class="variation">Schmidt Defense</div>
+    </div>
+    <div class="opening" data-line="e2e4 e7e5 g1f3 b8c6 b1c3 g8f6">Four Knights
+      <div class="variation">4…Bb4</div>
+      <div class="variation">4…Be7</div>
+      <div class="variation">4…Nd4</div>
+      <div class="variation">4…a6</div>
+    </div>
+    <div class="opening" data-line="e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 f3g5">Fried Liver Attack
+      <div class="variation">Traxler Counterattack</div>
+      <div class="variation">Lolli Attack</div>
+      <div class="variation">Main 4…d5</div>
+    </div>
+    <div class="opening" data-line="e2e4 e7e5 d1h5 b8c6 f1c4 g8f6 h5f7">Scholar's Mate
+      <div class="variation">2…Nc6</div>
+      <div class="variation">2…g6</div>
+      <div class="variation">3…Nf6</div>
+    </div>
+    <div class="opening" data-line="d2d4 f7f5 c2c4 g8f6 b1c3">Dutch Defense
+      <div class="variation">Classical</div>
+      <div class="variation">Staunton Gambit</div>
+    </div>
+    <div class="opening" data-line="d2d4 d7d5 c1f4 g8f6 e2e3">London System
+      <div class="variation">Queen’s Gambit setups</div>
+      <div class="variation">King’s Indian-like plans</div>
+    </div>
+    <div class="opening" data-line="d2d4 g8f6 c2c4 g7g6 b1c3 d7d5">Grünfeld Defense
+      <div class="variation">Exchange Variation</div>
+      <div class="variation">Russian System</div>
+    </div>
+    <div class="opening" data-line="b2b4 d7d5 c1b2 g8f6 e2e3">Polish Opening
+      <div class="variation">1…d5</div>
+      <div class="variation">1…e5</div>
+      <div class="variation">1…Nf6</div>
+    </div>
+
+  </div>
+
+  <!-- Board -->
+  <div id="board-container">
+    <div id="board-prompt">Click an opening to start.</div>
+    <div id="play-area" class="hidden">
+      <div id="board-stack">
+        <div id="analysis-row">
+          <button id="what-if">What if</button>
+          <span id="best-move">Best move: -</span>
+        </div>
+        <div id="board"></div>
+      </div>
+      <div id="board-controls">
+        <button id="prev-step">Prev</button>
+        <button id="next-step">Next</button>
+        <button id="reset">Reset</button>
+        <span id="step-label">Step: 0/0</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Simple chessboard logic
+    const boardPrompt = document.getElementById('board-prompt');
+    const playArea = document.getElementById('play-area');
+    const boardEl = document.getElementById('board');
+    const whatIfBtn = document.getElementById('what-if');
+    const bestMoveEl = document.getElementById('best-move');
+    const resetBtn = document.getElementById('reset');
+    const prevStepBtn = document.getElementById('prev-step');
+    const nextStepBtn = document.getElementById('next-step');
+    const stepLabel = document.getElementById('step-label');
+    let selected = null;
+    let lastMove = null;
+    let moveHistory = [];
+    let currentLineMoves = [];
+    let currentStep = 0;
+    let engine = null;
+    let engineReady = false;
+    let analyzeWhenReady = false;
+    let engineUnavailableReason = '';
+
+    const startSetup = [
+      ['wr','wn','wb','wq','wk','wb','wn','wr'],
+      ['wp','wp','wp','wp','wp','wp','wp','wp'],
+      ['','','','','','','',''],
+      ['','','','','','','',''],
+      ['','','','','','','',''],
+      ['','','','','','','',''],
+      ['bp','bp','bp','bp','bp','bp','bp','bp'],
+      ['br','bn','bb','bq','bk','bb','bn','br'],
+    ];
+    let initialSetup = startSetup.map(row => [...row]);
+
+    const STOCKFISH_SOURCES = [
+      'Engine/stockfish.wasm.js',
+      'https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.wasm.js'
+    ];
+
+    function handleEngineMessage(event) {
+      const line = String(event.data || '');
+      if (line.startsWith('bestmove ')) {
+        const move = line.split(/\s+/)[1];
+        bestMoveEl.textContent = move && move !== '(none)' ? `Best move: ${move}` : 'Best move: -';
+      }
+    }
+
+    function handleEngineError() {
+      engineUnavailableReason = 'Engine error';
+      bestMoveEl.textContent = 'Best move: Engine error';
+    }
+
+    function tryStartEngine(workerUrl) {
+      return new Promise((resolve, reject) => {
+        let candidate = null;
+        let finished = false;
+        const timeoutId = setTimeout(() => fail(new Error('uci timeout')), 8000);
+
+        function cleanup() {
+          clearTimeout(timeoutId);
+        }
+
+        function fail(error) {
+          if (finished) return;
+          finished = true;
+          cleanup();
+          if (candidate) {
+            try { candidate.terminate(); } catch (_) {}
+          }
+          reject(error);
+        }
+
+        try {
+          candidate = new Worker(workerUrl);
+        } catch (error) {
+          fail(error);
+          return;
+        }
+
+        candidate.onmessage = (event) => {
+          const line = String(event.data || '');
+          if (line !== 'uciok') return;
+          if (finished) return;
+          finished = true;
+          cleanup();
+          candidate.onmessage = handleEngineMessage;
+          candidate.onerror = handleEngineError;
+          resolve(candidate);
+        };
+
+        candidate.onerror = () => fail(new Error('worker start error'));
+        candidate.postMessage('uci');
+        candidate.postMessage('isready');
+      });
+    }
+
+    async function initEngine() {
+      engine = null;
+      engineReady = false;
+      engineUnavailableReason = '';
+
+      for (const source of STOCKFISH_SOURCES) {
+        try {
+          engine = await tryStartEngine(source);
+          engineReady = true;
+          if (analyzeWhenReady) {
+            analyzeWhenReady = false;
+            requestBestMove();
+          }
+          return;
+        } catch (_) {}
+      }
+
+      engineUnavailableReason = 'Engine unavailable';
+      bestMoveEl.textContent = `Best move: ${engineUnavailableReason}`;
+    }
+
+    function pieceToFen(piece) {
+      if (!piece) return '';
+      const kind = piece[1];
+      const map = { p: 'p', r: 'r', n: 'n', b: 'b', q: 'q', k: 'k' };
+      const base = map[kind] || 'p';
+      return piece[0] === 'w' ? base.toUpperCase() : base;
+    }
+
+    function boardToFen() {
+      const rows = [];
+      for (let r = 0; r < 8; r++) {
+        let rowFen = '';
+        let empty = 0;
+        for (let f = 0; f < 8; f++) {
+          const piece = pieceToFen(initialSetup[r][f]);
+          if (!piece) {
+            empty++;
+          } else {
+            if (empty > 0) rowFen += String(empty);
+            empty = 0;
+            rowFen += piece;
+          }
+        }
+        if (empty > 0) rowFen += String(empty);
+        rows.push(rowFen);
+      }
+      const side = moveHistory.length % 2 === 0 ? 'w' : 'b';
+      const fullMove = Math.floor(moveHistory.length / 2) + 1;
+      return `${rows.join('/')} ${side} - - 0 ${fullMove}`;
+    }
+
+    function requestBestMove() {
+      if (!engine) {
+        bestMoveEl.textContent = engineUnavailableReason ? `Best move: ${engineUnavailableReason}` : 'Best move: Engine unavailable';
+        return;
+      }
+      if (moveHistory.length === 0) {
+        bestMoveEl.textContent = 'Best move: -';
+        return;
+      }
+      if (!engineReady) {
+        analyzeWhenReady = true;
+        bestMoveEl.textContent = 'Best move: Engine loading...';
+        return;
+      }
+      const fen = boardToFen();
+      bestMoveEl.textContent = 'Best move: thinking...';
+      engine.postMessage('stop');
+      engine.postMessage(`position fen ${fen}`);
+      engine.postMessage('go depth 12');
+    }
+
+    function renderBoard() {
+      boardEl.innerHTML = '';
+      for(let r=0;r<8;r++){
+        for(let f=0;f<8;f++){
+          const square = document.createElement('div');
+          square.classList.add('square');
+          if((r+f)%2===0) square.classList.add('light');
+          else square.classList.add('dark');
+          square.dataset.row = r;
+          square.dataset.col = f;
+          const piece = initialSetup[r][f];
+          if(piece !== '') {
+            const img = document.createElement('img');
+            img.src = `chess/${piece}.png`;
+            square.appendChild(img);
+          }
+          if(lastMove && ((lastMove.from[0]===r && lastMove.from[1]===f) || (lastMove.to[0]===r && lastMove.to[1]===f))) {
+            square.classList.add('last-move');
+          }
+          square.addEventListener('click', ()=>handleClick(r,f));
+          boardEl.appendChild(square);
+        }
+      }
+    }
+
+    function updateStepLabel() {
+      stepLabel.textContent = `Step: ${currentStep}/${currentLineMoves.length}`;
+    }
+
+    function showBoardArea(show) {
+      if (show) {
+        boardPrompt.style.display = 'none';
+        playArea.classList.remove('hidden');
+      } else {
+        playArea.classList.add('hidden');
+        boardPrompt.style.display = 'block';
+      }
+    }
+
+    function handleClick(r,f){
+      if(selected){
+        moveHistory.push({
+          from: [...selected],
+          to: [r,f],
+          moved: initialSetup[selected[0]][selected[1]],
+          captured: initialSetup[r][f]
+        });
+        initialSetup[r][f] = initialSetup[selected[0]][selected[1]];
+        initialSetup[selected[0]][selected[1]] = '';
+        lastMove = {from: [...selected], to: [r,f]};
+        selected = null;
+        renderBoard();
+        requestBestMove();
+      } else if(initialSetup[r][f] !== ''){
+        selected = [r,f];
+      }
+    }
+
+    function squareToCoord(square) {
+      const file = square.charCodeAt(0) - 97;
+      const rank = Number(square[1]);
+      return [8 - rank, file];
+    }
+
+    function applyLine(line) {
+      currentLineMoves = line.trim().split(/\s+/).filter(move => move.length === 4);
+      currentStep = 0;
+      showBoardArea(true);
+      rebuildLinePosition();
+    }
+
+    function rebuildLinePosition() {
+      initialSetup = startSetup.map(row => [...row]);
+      selected = null;
+      lastMove = null;
+      moveHistory = [];
+      for (let i = 0; i < currentStep; i++) {
+        const move = currentLineMoves[i];
+        if (move.length !== 4) continue;
+        const from = squareToCoord(move.slice(0, 2));
+        const to = squareToCoord(move.slice(2, 4));
+        moveHistory.push({
+          from: [...from],
+          to: [...to],
+          moved: initialSetup[from[0]][from[1]],
+          captured: initialSetup[to[0]][to[1]]
+        });
+        initialSetup[to[0]][to[1]] = initialSetup[from[0]][from[1]];
+        initialSetup[from[0]][from[1]] = '';
+        lastMove = {from: [...from], to: [...to]};
+      }
+      renderBoard();
+      updateStepLabel();
+      requestBestMove();
+    }
+
+    document.querySelectorAll('.opening').forEach((openingEl) => {
+      openingEl.addEventListener('click', (event) => {
+        const card = event.target.closest('.opening');
+        if (!card) return;
+        const line = card.dataset.line;
+        if (!line) return;
+        applyLine(line);
+      });
+    });
+
+    whatIfBtn.addEventListener('click', () => {
+      window.location.href = 'whatif.html';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      initialSetup = startSetup.map(row => [...row]);
+      selected = null;
+      lastMove = null;
+      moveHistory = [];
+      currentLineMoves = [];
+      currentStep = 0;
+      renderBoard();
+      updateStepLabel();
+      bestMoveEl.textContent = 'Best move: -';
+      showBoardArea(false);
+    });
+
+    prevStepBtn.addEventListener('click', () => {
+      if (currentStep <= 0) return;
+      currentStep--;
+      rebuildLinePosition();
+    });
+
+    nextStepBtn.addEventListener('click', () => {
+      if (currentStep >= currentLineMoves.length) return;
+      currentStep++;
+      rebuildLinePosition();
+    });
+
+    renderBoard();
+    updateStepLabel();
+    showBoardArea(false);
+    initEngine();
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
